@@ -5,20 +5,37 @@ import android.content.res.TypedArray;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
-import android.graphics.drawable.Drawable;
-import android.text.TextPaint;
+import android.graphics.Shader;
+import android.graphics.SweepGradient;
 import android.util.AttributeSet;
 import android.view.View;
 
 public class Progress extends View {
-    private String mExampleString;
-    private int mExampleColor = Color.RED;
-    private float mExampleDimension = 0;
-    private Drawable mExampleDrawable;
-
-    private TextPaint mTextPaint;
-    private float mTextWidth;
-    private float mTextHeight;
+    private int paddingLeft;
+    private int paddingTop;
+    private int paddingRight;
+    private int paddingBottom;
+    private int contentWidth;
+    private int contentHeight;
+    private int widthHeightOffset;
+    private int progress;
+    private Paint outerCirclePaint;
+    private Paint innerCirclePaint;
+    private int centerX;
+    private int centerY;
+    private int outerCircleRadius;
+    private int innerCicleRadius;
+    private float outerCicleStarLeftY;
+    private float outerCicleStarRightY;
+    private float outerCicleStarLeftX;
+    private float outerCicleStarRightX;
+    private Paint outerCircleStarPaint;
+    private int progressOuterRadius;
+    private int progressInnerRadius;
+    private Paint progressIndectorPaint;
+    private Paint innerSweepPaint;
+    private int defaultColor = Color.parseColor("#FF209331");
+    private Paint outerSweepPaint;
 
     public Progress(Context context) {
         super(context);
@@ -35,148 +52,113 @@ public class Progress extends View {
         init(attrs, defStyle);
     }
 
+    private static int changeAlpha(int color, int alpha) {
+        int red = Color.red(color);
+        int green = Color.green(color);
+        int blue = Color.blue(color);
+        return Color.argb(alpha, red, green, blue);
+    }
+
+    public int getProgress() {
+        return progress;
+    }
+
+    public void setProgress(int progress) {
+        this.progress = progress;
+    }
+
     private void init(AttributeSet attrs, int defStyle) {
         // Load attributes
         final TypedArray a = getContext().obtainStyledAttributes(
                 attrs, R.styleable.Progress, defStyle, 0);
 
-        mExampleString = a.getString(
-                R.styleable.Progress_exampleString);
-        mExampleColor = a.getColor(
-                R.styleable.Progress_exampleColor,
-                mExampleColor);
-        // Use getDimensionPixelSize or getDimensionPixelOffset when dealing with
-        // values that should fall on pixel boundaries.
-        mExampleDimension = a.getDimension(
-                R.styleable.Progress_exampleDimension,
-                mExampleDimension);
-
-        if (a.hasValue(R.styleable.Progress_exampleDrawable)) {
-            mExampleDrawable = a.getDrawable(
-                    R.styleable.Progress_exampleDrawable);
-            mExampleDrawable.setCallback(this);
-        }
-
         a.recycle();
-
-        // Set up a default TextPaint object
-        mTextPaint = new TextPaint();
-        mTextPaint.setFlags(Paint.ANTI_ALIAS_FLAG);
-        mTextPaint.setTextAlign(Paint.Align.LEFT);
-
-        // Update TextPaint and text measurements from attributes
-        invalidateTextPaintAndMeasurements();
-    }
-
-    private void invalidateTextPaintAndMeasurements() {
-        mTextPaint.setTextSize(mExampleDimension);
-        mTextPaint.setColor(mExampleColor);
-        mTextWidth = mTextPaint.measureText(mExampleString);
-
-        Paint.FontMetrics fontMetrics = mTextPaint.getFontMetrics();
-        mTextHeight = fontMetrics.bottom;
+        outerCirclePaint = new Paint();
+        outerCirclePaint.setColor(Color.parseColor("#4013C2C2"));
+        outerCirclePaint.setStrokeWidth(2);
+        outerCirclePaint.setAntiAlias(true);
+        outerCirclePaint.setStyle(Paint.Style.STROKE);
+        innerCirclePaint = new Paint();
+        innerCirclePaint.setColor(Color.parseColor("#A6209331"));
+        innerCirclePaint.setStrokeWidth(2);
+        innerCirclePaint.setAntiAlias(true);
+        innerCirclePaint.setStyle(Paint.Style.STROKE);
+        outerCircleStarPaint = new Paint();
+        outerCircleStarPaint.setColor(Color.parseColor("#4013C2C2"));
+        outerCircleStarPaint.setAntiAlias(true);
+        outerCircleStarPaint.setStyle(Paint.Style.FILL_AND_STROKE);
+        progressIndectorPaint = new Paint();
+        progressIndectorPaint.setColor(Color.parseColor("#1A000000"));
+        progressIndectorPaint.setAntiAlias(true);
+        progressIndectorPaint.setStyle(Paint.Style.FILL_AND_STROKE);
+        progressIndectorPaint.setStrokeWidth(6);
+        progressIndectorPaint.setStrokeCap(Paint.Cap.ROUND);
+        innerSweepPaint = new Paint();
+        innerSweepPaint.setAntiAlias(true);
+        outerSweepPaint = new Paint();
+        outerSweepPaint.setAntiAlias(true);
     }
 
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
-        int paddingLeft = getPaddingLeft();
-        int paddingTop = getPaddingTop();
-        int paddingRight = getPaddingRight();
-        int paddingBottom = getPaddingBottom();
-
-        int contentWidth = getWidth() - paddingLeft - paddingRight;
-        int contentHeight = getHeight() - paddingTop - paddingBottom;
-        // Draw the text.
-        canvas.drawText(mExampleString,
-                paddingLeft + (contentWidth - mTextWidth) / 2,
-                paddingTop + (contentHeight + mTextHeight) / 2,
-                mTextPaint);
-
-        // Draw the example drawable on top of the text.
-        if (mExampleDrawable != null) {
-            mExampleDrawable.setBounds(paddingLeft, paddingTop,
-                    paddingLeft + contentWidth, paddingTop + contentHeight);
-            mExampleDrawable.draw(canvas);
+        canvas.drawCircle(centerX, centerY, outerCircleRadius, outerCirclePaint);
+        canvas.drawCircle(centerX, centerY, innerCicleRadius, innerCirclePaint);
+        canvas.drawCircle(outerCicleStarLeftX, outerCicleStarLeftY, 6, outerCircleStarPaint);
+        canvas.drawCircle(outerCicleStarRightX, outerCicleStarRightY, 6, outerCircleStarPaint);
+        int save = canvas.save();
+        Double outerX = (progressOuterRadius * Math.sin(3.6)) + centerX;
+        Double outerY = (progressOuterRadius * Math.cos(3.6)) + centerY;
+        Double innerX = (progressInnerRadius * Math.sin(3.6)) + centerX;
+        Double innerY = (progressInnerRadius * Math.cos(3.6)) + centerY;
+        for (int i = 0; i < 100; i++) {
+            canvas.drawLine(innerX.floatValue(), innerY.floatValue(), outerX.floatValue(), outerY.floatValue(), progressIndectorPaint);
+            canvas.rotate(3.6f, centerX, centerY);
         }
+        canvas.restoreToCount(save);
+        int save1 = canvas.save();
+        canvas.rotate(-90, centerX, centerY);
+        canvas.drawCircle(centerX, centerY, innerCicleRadius - 30, innerSweepPaint);
+        canvas.drawCircle(centerX, centerY, outerCircleRadius - 30, outerSweepPaint);
+        canvas.restoreToCount(save1);
     }
 
-    /**
-     * Gets the example string attribute value.
-     *
-     * @return The example string attribute value.
-     */
-    public String getExampleString() {
-        return mExampleString;
+    @Override
+    protected void onSizeChanged(int w, int h, int oldw, int oldh) {
+        super.onSizeChanged(w, h, oldw, oldh);
+        paddingLeft = getPaddingLeft();
+        paddingTop = getPaddingTop();
+        paddingRight = getPaddingRight();
+        paddingBottom = getPaddingBottom();
+        contentWidth = getWidth() - paddingLeft - paddingRight;
+        contentHeight = getHeight() - paddingTop - paddingBottom;
+        widthHeightOffset = Math.abs(contentHeight - contentWidth);
+        centerX = contentWidth / 2;
+        centerY = contentHeight / 2;
+        outerCircleRadius = contentHeight / 2 - 2;
+        innerCicleRadius = (contentWidth / 2) - 100;
+        outerCicleStarLeftX = Double.valueOf(Math.sin(40) * outerCircleRadius + centerX).floatValue();
+        outerCicleStarLeftY = Double.valueOf(Math.cos(40) * outerCircleRadius + centerX).floatValue();
+        outerCicleStarRightX = Double.valueOf(centerX - (Math.sin(40) * outerCircleRadius)).floatValue();
+        outerCicleStarRightY = Double.valueOf(centerX - (Math.cos(40) * outerCircleRadius)).floatValue();
+        progressOuterRadius = outerCircleRadius - 50;
+        progressInnerRadius = innerCicleRadius + 20;
+        Shader shader = new SweepGradient(centerX, centerY, new int[]{changeAlpha(defaultColor, 0), changeAlpha(defaultColor, 0),
+                changeAlpha(defaultColor, 180)},
+                new float[]{0f, 0.6f, 1}
+        );
+        innerSweepPaint.setShader(shader);
+        SweepGradient outerShader = new SweepGradient(centerX, centerY, new int[]{changeAlpha(defaultColor, 0), changeAlpha(defaultColor, 0),
+                changeAlpha(defaultColor, 64)},
+                new float[]{0f, 0.6f, 1});
+        outerSweepPaint.setShader(outerShader);
     }
 
-    /**
-     * Sets the view's example string attribute value. In the example view, this string
-     * is the text to draw.
-     *
-     * @param exampleString The example string attribute value to use.
-     */
-    public void setExampleString(String exampleString) {
-        mExampleString = exampleString;
-        invalidateTextPaintAndMeasurements();
-    }
-
-    /**
-     * Gets the example color attribute value.
-     *
-     * @return The example color attribute value.
-     */
-    public int getExampleColor() {
-        return mExampleColor;
-    }
-
-    /**
-     * Sets the view's example color attribute value. In the example view, this color
-     * is the font color.
-     *
-     * @param exampleColor The example color attribute value to use.
-     */
-    public void setExampleColor(int exampleColor) {
-        mExampleColor = exampleColor;
-        invalidateTextPaintAndMeasurements();
-    }
-
-    /**
-     * Gets the example dimension attribute value.
-     *
-     * @return The example dimension attribute value.
-     */
-    public float getExampleDimension() {
-        return mExampleDimension;
-    }
-
-    /**
-     * Sets the view's example dimension attribute value. In the example view, this dimension
-     * is the font size.
-     *
-     * @param exampleDimension The example dimension attribute value to use.
-     */
-    public void setExampleDimension(float exampleDimension) {
-        mExampleDimension = exampleDimension;
-        invalidateTextPaintAndMeasurements();
-    }
-
-    /**
-     * Gets the example drawable attribute value.
-     *
-     * @return The example drawable attribute value.
-     */
-    public Drawable getExampleDrawable() {
-        return mExampleDrawable;
-    }
-
-    /**
-     * Sets the view's example drawable attribute value. In the example view, this drawable is
-     * drawn above the text.
-     *
-     * @param exampleDrawable The example drawable attribute value to use.
-     */
-    public void setExampleDrawable(Drawable exampleDrawable) {
-        mExampleDrawable = exampleDrawable;
+    @Override
+    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
+        int widthSize = MeasureSpec.getSize(widthMeasureSpec);
+        int heightSize = MeasureSpec.getSize(heightMeasureSpec);
+        int size = Math.min(widthSize, heightSize);
+        setMeasuredDimension(size, size);
     }
 }

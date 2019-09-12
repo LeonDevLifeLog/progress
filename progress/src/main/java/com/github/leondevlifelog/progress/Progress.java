@@ -5,6 +5,7 @@ import android.content.res.TypedArray;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.RectF;
 import android.graphics.Shader;
 import android.graphics.SweepGradient;
 import android.util.AttributeSet;
@@ -17,8 +18,7 @@ public class Progress extends View {
     private int paddingBottom;
     private int contentWidth;
     private int contentHeight;
-    private int widthHeightOffset;
-    private int progress;
+    private int progress = 45;
     private Paint outerCirclePaint;
     private Paint innerCirclePaint;
     private int centerX;
@@ -33,9 +33,12 @@ public class Progress extends View {
     private int progressOuterRadius;
     private int progressInnerRadius;
     private Paint progressIndectorPaint;
+    private Paint progressColorPaint;
     private Paint innerSweepPaint;
     private int defaultColor = Color.parseColor("#FF209331");
     private Paint outerSweepPaint;
+    private Paint progressPaint;
+    private RectF reactProgressArc;
 
     public Progress(Context context) {
         super(context);
@@ -97,6 +100,16 @@ public class Progress extends View {
         innerSweepPaint.setAntiAlias(true);
         outerSweepPaint = new Paint();
         outerSweepPaint.setAntiAlias(true);
+        progressColorPaint = new Paint();
+        progressColorPaint.setAntiAlias(true);
+        progressColorPaint.setStrokeWidth(6);
+        progressColorPaint.setStrokeCap(Paint.Cap.ROUND);
+        progressPaint = new Paint();
+        progressPaint.setAntiAlias(true);
+        progressPaint.setColor(defaultColor);
+        progressPaint.setStrokeWidth(6);
+        progressPaint.setStyle(Paint.Style.STROKE);
+        progressPaint.setStrokeCap(Paint.Cap.ROUND);
     }
 
     @Override
@@ -107,12 +120,8 @@ public class Progress extends View {
         canvas.drawCircle(outerCicleStarLeftX, outerCicleStarLeftY, 6, outerCircleStarPaint);
         canvas.drawCircle(outerCicleStarRightX, outerCicleStarRightY, 6, outerCircleStarPaint);
         int save = canvas.save();
-        Double outerX = (progressOuterRadius * Math.sin(3.6)) + centerX;
-        Double outerY = (progressOuterRadius * Math.cos(3.6)) + centerY;
-        Double innerX = (progressInnerRadius * Math.sin(3.6)) + centerX;
-        Double innerY = (progressInnerRadius * Math.cos(3.6)) + centerY;
         for (int i = 0; i < 100; i++) {
-            canvas.drawLine(innerX.floatValue(), innerY.floatValue(), outerX.floatValue(), outerY.floatValue(), progressIndectorPaint);
+            canvas.drawLine(centerX, centerY + progressInnerRadius, centerX, centerY + progressOuterRadius, progressIndectorPaint);
             canvas.rotate(3.6f, centerX, centerY);
         }
         canvas.restoreToCount(save);
@@ -121,6 +130,15 @@ public class Progress extends View {
         canvas.drawCircle(centerX, centerY, innerCicleRadius - 30, innerSweepPaint);
         canvas.drawCircle(centerX, centerY, outerCircleRadius - 30, outerSweepPaint);
         canvas.restoreToCount(save1);
+        int save2 = canvas.save();
+        canvas.rotate(-180, centerX, centerY);
+        for (int i = 0; i < 40; i++) {
+            progressColorPaint.setColor(changeAlpha(defaultColor, Float.valueOf(255 - (i * (255.0f / 40.0f))).intValue()));
+            canvas.drawLine(centerX, centerY + progressInnerRadius, centerX, centerY + progressOuterRadius, progressColorPaint);
+            canvas.rotate(-3.6f, centerX, centerY);
+        }
+        canvas.restoreToCount(save2);
+        canvas.drawArc(reactProgressArc, -90, progress * 360 / 100.0f, false, progressPaint);
     }
 
     @Override
@@ -132,7 +150,6 @@ public class Progress extends View {
         paddingBottom = getPaddingBottom();
         contentWidth = getWidth() - paddingLeft - paddingRight;
         contentHeight = getHeight() - paddingTop - paddingBottom;
-        widthHeightOffset = Math.abs(contentHeight - contentWidth);
         centerX = contentWidth / 2;
         centerY = contentHeight / 2;
         outerCircleRadius = contentHeight / 2 - 2;
@@ -152,6 +169,7 @@ public class Progress extends View {
                 changeAlpha(defaultColor, 64)},
                 new float[]{0f, 0.6f, 1});
         outerSweepPaint.setShader(outerShader);
+        reactProgressArc = new RectF(contentWidth / 2 - innerCicleRadius, contentHeight / 2 - innerCicleRadius, contentWidth - (contentWidth / 2 - innerCicleRadius), contentHeight - (contentHeight / 2 - innerCicleRadius));
     }
 
     @Override

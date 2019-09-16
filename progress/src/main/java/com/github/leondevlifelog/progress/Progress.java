@@ -1,5 +1,6 @@
 package com.github.leondevlifelog.progress;
 
+import android.animation.ValueAnimator;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Canvas;
@@ -9,16 +10,19 @@ import android.graphics.RectF;
 import android.graphics.Shader;
 import android.graphics.SweepGradient;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.View;
+import android.view.animation.LinearInterpolator;
 
 public class Progress extends View {
+    private static final String TAG = "Progress";
     private int paddingLeft;
     private int paddingTop;
     private int paddingRight;
     private int paddingBottom;
     private int contentWidth;
     private int contentHeight;
-    private int progress = 45;
+    private int progress = 0;
     private Paint outerCirclePaint;
     private Paint innerCirclePaint;
     private int centerX;
@@ -39,6 +43,9 @@ public class Progress extends View {
     private Paint outerSweepPaint;
     private Paint progressPaint;
     private RectF reactProgressArc;
+    private float scanDegree = 0f;
+    private ValueAnimator scanDegreeAnimator;
+    private Paint finishPgPaint;
 
     public Progress(Context context) {
         super(context);
@@ -67,11 +74,21 @@ public class Progress extends View {
     }
 
     public void setProgress(int progress) {
+        if (progress == 0) {
+            scanDegreeAnimator.end();
+        } else if (progress == 100) {
+            scanDegreeAnimator.end();
+        } else {
+            if (!scanDegreeAnimator.isRunning()) {
+                scanDegreeAnimator.start();
+            }
+        }
         this.progress = progress;
     }
 
-    private void init(AttributeSet attrs, int defStyle) {
+    private void init(AttributeSet attrs, final int defStyle) {
         // Load attributes
+        setLayerType(View.LAYER_TYPE_SOFTWARE, null);
         final TypedArray a = getContext().obtainStyledAttributes(
                 attrs, R.styleable.Progress, defStyle, 0);
 
@@ -110,6 +127,24 @@ public class Progress extends View {
         progressPaint.setStrokeWidth(6);
         progressPaint.setStyle(Paint.Style.STROKE);
         progressPaint.setStrokeCap(Paint.Cap.ROUND);
+        finishPgPaint = new Paint();
+        finishPgPaint.setAntiAlias(true);
+        finishPgPaint.setColor(Color.parseColor("#2613C2C2"));
+        finishPgPaint.setStyle(Paint.Style.FILL_AND_STROKE);
+        scanDegreeAnimator = ValueAnimator.ofFloat(0f, 360f);
+        scanDegreeAnimator.setDuration(3600);
+        scanDegreeAnimator.setRepeatCount(ValueAnimator.INFINITE);
+        scanDegreeAnimator.setInterpolator(new LinearInterpolator());
+        scanDegreeAnimator.setRepeatMode(ValueAnimator.RESTART);
+        scanDegreeAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            @Override
+            public void onAnimationUpdate(ValueAnimator valueAnimator) {
+                Float degree = (Float) valueAnimator.getAnimatedValue();
+                scanDegree = degree - (degree % 3.6f);
+                invalidate();
+                Log.d(TAG, "onAnimationUpdate: " + degree);
+            }
+        });
     }
 
     @Override
@@ -119,26 +154,50 @@ public class Progress extends View {
         canvas.drawCircle(centerX, centerY, innerCicleRadius, innerCirclePaint);
         canvas.drawCircle(outerCicleStarLeftX, outerCicleStarLeftY, 6, outerCircleStarPaint);
         canvas.drawCircle(outerCicleStarRightX, outerCicleStarRightY, 6, outerCircleStarPaint);
-        int save = canvas.save();
-        for (int i = 0; i < 100; i++) {
-            canvas.drawLine(centerX, centerY + progressInnerRadius, centerX, centerY + progressOuterRadius, progressIndectorPaint);
-            canvas.rotate(3.6f, centerX, centerY);
+        drawFinishBg(canvas);
+        drawDopLine(canvas);
+        drawScanSweep(canvas);
+        canvas.drawArc(reactProgressArc, -90, progress * 360 / 100.0f, false, progressPaint);
+    }
+
+    private void drawFinishBg(Canvas canvas) {
+        if (progress != 100) {
+            return;
         }
-        canvas.restoreToCount(save);
+        canvas.drawCircle(centerX, centerY, progressOuterRadius + 20, finishPgPaint);
+    }
+
+    private void drawScanSweep(Canvas canvas) {
+        if (progress == 100) {
+            return;
+        }
         int save1 = canvas.save();
-        canvas.rotate(-90, centerX, centerY);
+        canvas.rotate(scanDegree - 90, centerX, centerY);
         canvas.drawCircle(centerX, centerY, innerCicleRadius - 30, innerSweepPaint);
         canvas.drawCircle(centerX, centerY, outerCircleRadius - 30, outerSweepPaint);
         canvas.restoreToCount(save1);
         int save2 = canvas.save();
-        canvas.rotate(-180, centerX, centerY);
+        canvas.rotate(scanDegree - 180, centerX, centerY);
         for (int i = 0; i < 40; i++) {
             progressColorPaint.setColor(changeAlpha(defaultColor, Float.valueOf(255 - (i * (255.0f / 40.0f))).intValue()));
             canvas.drawLine(centerX, centerY + progressInnerRadius, centerX, centerY + progressOuterRadius, progressColorPaint);
             canvas.rotate(-3.6f, centerX, centerY);
         }
         canvas.restoreToCount(save2);
-        canvas.drawArc(reactProgressArc, -90, progress * 360 / 100.0f, false, progressPaint);
+    }
+
+    private void drawDopLine(Canvas canvas) {
+        if (progress != 100) {
+            progressIndectorPaint.setColor(Color.parseColor("#1A000000"));
+        } else {
+            progressIndectorPaint.setColor(defaultColor);
+        }
+        int save = canvas.save();
+        for (int i = 0; i < 100; i++) {
+            canvas.drawLine(centerX, centerY + progressInnerRadius, centerX, centerY + progressOuterRadius, progressIndectorPaint);
+            canvas.rotate(3.6f, centerX, centerY);
+        }
+        canvas.restoreToCount(save);
     }
 
     @Override

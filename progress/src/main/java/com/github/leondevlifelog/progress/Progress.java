@@ -228,7 +228,7 @@ public class Progress extends View {
                 changeAlpha(defaultColor, 64)},
                 new float[]{0f, 0.6f, 1});
         outerSweepPaint.setShader(outerShader);
-        reactProgressArc = new RectF(contentWidth / 2 - innerCicleRadius, contentHeight / 2 - innerCicleRadius, contentWidth - (contentWidth / 2 - innerCicleRadius), contentHeight - (contentHeight / 2 - innerCicleRadius));
+        reactProgressArc = new RectF(getWidth() / 2 - innerCicleRadius, getHeight() / 2 - innerCicleRadius, getWidth() - (getWidth() / 2 - innerCicleRadius), getHeight() - (getHeight() / 2 - innerCicleRadius));
     }
 
     @Override

@@ -209,8 +209,8 @@ public class Progress extends View {
         paddingBottom = getPaddingBottom();
         contentWidth = getWidth() - paddingLeft - paddingRight;
         contentHeight = getHeight() - paddingTop - paddingBottom;
-        centerX = contentWidth / 2;
-        centerY = contentHeight / 2;
+        centerX = (contentWidth / 2) + paddingLeft;
+        centerY = (contentHeight / 2) + paddingTop;
         outerCircleRadius = contentHeight / 2 - 2;
         innerCicleRadius = (contentWidth / 2) - 100;
         outerCicleStarLeftX = Double.valueOf(Math.sin(40) * outerCircleRadius + centerX).floatValue();

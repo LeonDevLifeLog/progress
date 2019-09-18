@@ -134,15 +134,10 @@ public class PieView extends View {
             float radius = minRadius + ((i + 1) * pieRadiusGap);
             arcPaint.setShadowLayer(6, 0, 0, data.get(i).getPieColor());
             rectF.set(-radius, -radius, radius, radius);
-            float sweepAngle = 360.0f * data.get(i).getCount() / totalSize;
-            if (sweepAngle > 360f - ((data.size() - 1))) {
-                sweepAngle = 360f - ((data.size() - 1));
-            } else if (sweepAngle < 1) {
-                sweepAngle = 1;
-            }
+            float sweepAngle = (360.0f * data.get(i).getCount() / totalSize) + 1;
             canvas.drawArc(rectF, startAngle, sweepAngle, true, arcPaint);
             startAngle += sweepAngle;
-            drawLableAndLine(i, canvas, startAngle - (sweepAngle / 2.0f), radius, data.get(i));
+            drawLableAndLine(i, canvas, startAngle - (sweepAngle - (sweepAngle / 4.0f)), radius, data.get(i));
         }
     }
 
@@ -150,8 +145,8 @@ public class PieView extends View {
         String countText = String.valueOf(pieData.getCount());
         Double startX = (radius - 60) * Math.cos(angle * Math.PI / 180f);
         Double startY = (radius - 60) * Math.sin(angle * Math.PI / 180f);
-        Double endX = (radius + 80) * Math.cos(angle * Math.PI / 180f);
-        Double endY = (radius + 80) * Math.sin(angle * Math.PI / 180f);
+        Double endX = (radius + 60) * Math.cos(angle * Math.PI / 180f);
+        Double endY = (radius + 60) * Math.sin(angle * Math.PI / 180f);
         linePaint.setColor(pieData.getLineColor());
         canvas.drawLine(startX.floatValue(), startY.floatValue(),
                 endX.floatValue(), endY.floatValue(), linePaint);

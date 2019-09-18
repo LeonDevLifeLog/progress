@@ -30,14 +30,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         e.setOnClickListener(this);
         data.add(e);
         PieData e1 = new PieData();
-        e1.setCount(30);
+        e1.setCount(0);
         e1.setLable("非敏感文件");
         e1.setOnClickListener(this);
         e1.setPieColor(Color.parseColor("#43C55F"));
         e1.setLineColor(Color.parseColor("#209331"));
         data.add(e1);
         PieData e2 = new PieData();
-        e2.setCount(40);
+        e2.setCount(0);
         e2.setLable("未判定");
         e2.setOnClickListener(this);
         e2.setPieColor(Color.parseColor("#4D000000"));

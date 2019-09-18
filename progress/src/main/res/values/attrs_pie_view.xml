@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="PieView">
+        <attr name="maxRadius" format="dimension|reference" />
+        <attr name="minRadius" format="dimension|reference" />
+        <attr name="dotRadius" format="dimension|reference" />
+        <attr name="labelTextSize" format="dimension|reference" />
+        <attr name="countTextSize" format="dimension|reference" />
+        <attr name="countTextColor" format="color|reference" />
+        <attr name="lineWidth" format="dimension|reference" />
+    </declare-styleable>
+</resources>
